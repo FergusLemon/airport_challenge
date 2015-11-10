@@ -1,7 +1,7 @@
 require 'airport'
 
 describe Airport do
-  subject(:airport) { described_class.new(weather, 20) }
+  subject(:airport) { described_class.new(weather, 5) }
   let(:plane) { double :plane, land: nil, take_off: nil }
   let(:weather) { double :weather }
 
@@ -52,7 +52,7 @@ describe Airport do
       end
 
       it 'raises an error if plane is not at this airport' do
-        other_airport = described_class.new(weather, 20)
+        other_airport = described_class.new(weather, 5)
         other_airport.land(plane)
         expect { airport.take_off(plane) }.to raise_error 'Cannot take off plane: plane not at this airport'
       end
