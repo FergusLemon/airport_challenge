@@ -1,58 +1,98 @@
-require './lib/airport.rb'
-require './lib/weather.rb'
-require './lib/plane.rb'
+require 'airport'
 
 describe Airport do
+  subject(:airport) { described_class.new(weather_reporter, 20) }
+  let(:plane) { double :plane, land: nil, take_off: nil }
+  let(:weather_reporter) { double :weather_reporter }
 
-  include Weather
+  describe '#land' do
+    context 'when not stormy' do
+      before do
+        allow(weather_reporter).to receive(:stormy?).and_return false
+      end
 
-  let(:plane) {double :plane}
+      it 'instructs a plane to land' do
+        expect(plane).to receive(:land)
+        airport.land(plane)
+      end
 
+      context 'when full' do
+        it 'raises an error' do
+            described_class::DEFAULT_CAPACITY.times do
+            airport.land(plane)
+          end
+          expect { airport.land(plane) }.to raise_error 'Cannot land plane: airport full'
+        end
+      end
+    end
 
-  context 'at instantiation' do
+    context 'when stormy' do
+      it 'raises an error' do
+        allow(weather_reporter).to receive(:stormy?).and_return true
+        expect { airport.land(plane) }.to raise_error 'Cannot land plane: weather is stormy'
+      end
+    end
+  end
+
+  describe '#take_off' do
+    context 'when not stormy' do
+      before do
+        allow(weather_reporter).to receive(:stormy?).and_return false
+      end
+
+      it 'instructs a plane to take off' do
+        airport.land(plane)
+        expect(plane).to receive(:take_off)
+        airport.take_off(plane)
+      end
+
+      it 'returns the plane that took off' do
+        airport.land(plane)
+        expect(airport.take_off(plane)).to eq plane
+      end
+
+      it 'raises an error if plane is not at this airport' do
+        other_airport = described_class.new(weather_reporter, 20)
+        other_airport.land(plane)
+        expect { airport.take_off(plane) }.to raise_error 'Cannot take off plane: plane not at this airport'
+      end
+    end
+
+    context 'when stormy' do
+      before do
+        allow(weather_reporter).to receive(:stormy?).and_return true
+      end
+
+      it 'raises an error' do
+        expect { airport.take_off(plane) }.to raise_error 'Cannot take off plane: weather is stormy'
+      end
+    end
+  end
+
+  describe '#planes' do
+    before do
+      allow(weather_reporter).to receive(:stormy?).and_return false
+    end
+
+    it 'returns planes at the airport' do
+      airport.land(plane)
+      expect(airport.planes).to include plane
+    end
+
+    it 'does not return planes that have taken off' do
+      airport.land(plane)
+      airport.take_off(plane)
+      expect(airport.planes).not_to include plane
+    end
+  end
+
+  context 'defaults' do
+    subject(:default_airport) { described_class.new(weather_reporter) }
 
     it 'has a default capacity' do
-      expect(subject.capacity).to eq Airport::DEFAULT_CAPACITY end
-
-    it "raises an error if try to land a plane when airport is full" do
-      allow(subject).to receive(:stormy?) {false}
-      plane = double('plane', flying: true)
-      Airport::DEFAULT_CAPACITY.times {subject.land(plane)}
-      expect {subject.land(plane)}.to raise_error "This airport is full"
+      allow(weather_reporter).to receive(:stormy?).and_return false
+      described_class::DEFAULT_CAPACITY.times { default_airport.land(plane) }
+      expect { default_airport.land(plane) }.to raise_error 'Cannot land plane: airport full'
     end
-
-
-   end
-
-   context 'landing a plane and releasing a plane' do
-
-     it 'removes the plane from the airport when it releases the plane' do
-       plane = double('plane', flying: false)
-       subject.release(plane)
-       expect(subject.planes).not_to include plane
-    end
-
-     it 'raises an error if a plane tries to take off when the weather is #stormy' do
-       plane = double('plane', flying: false)
-       allow(subject).to receive(:stormy?) { true }
-       expect {subject.release(plane)}.to raise_error "It is too stormy to fly"
-     end
-
-     it 'raises an error if a plane tries to land when the weather is #stormy' do
-       plane = double('plane', flying: true)
-       allow(subject).to receive(:stormy?) { true }
-       expect {subject.land(plane)}.to raise_error "It is too stormy to land"
-     end
-
-     it 'cannot #release a plane that is already flying' do
-       plane = double('plane', flying: true)
-       expect {subject.release(plane)}.to raise_error "This plane is already flying"
-     end
-
-     it 'cannot #land a plane that is already landed' do
-       plane = double('plane', flying: false)
-       expect {subject.land(plane)}.to raise_error "This plane has already landed"
-     end
-   end
-
+  end
 end
