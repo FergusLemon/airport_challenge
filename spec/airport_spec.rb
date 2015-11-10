@@ -1,14 +1,14 @@
 require 'airport'
 
 describe Airport do
-  subject(:airport) { described_class.new(weather_reporter, 20) }
+  subject(:airport) { described_class.new(weather, 20) }
   let(:plane) { double :plane, land: nil, take_off: nil }
-  let(:weather_reporter) { double :weather_reporter }
+  let(:weather) { double :weather }
 
   describe '#land' do
     context 'when not stormy' do
       before do
-        allow(weather_reporter).to receive(:stormy?).and_return false
+        allow(weather).to receive(:stormy?).and_return false
       end
 
       it 'instructs a plane to land' do
@@ -28,7 +28,7 @@ describe Airport do
 
     context 'when stormy' do
       it 'raises an error' do
-        allow(weather_reporter).to receive(:stormy?).and_return true
+        allow(weather).to receive(:stormy?).and_return true
         expect { airport.land(plane) }.to raise_error 'Cannot land plane: weather is stormy'
       end
     end
@@ -37,7 +37,7 @@ describe Airport do
   describe '#take_off' do
     context 'when not stormy' do
       before do
-        allow(weather_reporter).to receive(:stormy?).and_return false
+        allow(weather).to receive(:stormy?).and_return false
       end
 
       it 'instructs a plane to take off' do
@@ -52,7 +52,7 @@ describe Airport do
       end
 
       it 'raises an error if plane is not at this airport' do
-        other_airport = described_class.new(weather_reporter, 20)
+        other_airport = described_class.new(weather, 20)
         other_airport.land(plane)
         expect { airport.take_off(plane) }.to raise_error 'Cannot take off plane: plane not at this airport'
       end
@@ -60,7 +60,7 @@ describe Airport do
 
     context 'when stormy' do
       before do
-        allow(weather_reporter).to receive(:stormy?).and_return true
+        allow(weather).to receive(:stormy?).and_return true
       end
 
       it 'raises an error' do
@@ -71,7 +71,7 @@ describe Airport do
 
   describe '#planes' do
     before do
-      allow(weather_reporter).to receive(:stormy?).and_return false
+      allow(weather).to receive(:stormy?).and_return false
     end
 
     it 'returns planes at the airport' do
@@ -87,10 +87,10 @@ describe Airport do
   end
 
   context 'defaults' do
-    subject(:default_airport) { described_class.new(weather_reporter) }
+    subject(:default_airport) { described_class.new(weather) }
 
     it 'has a default capacity' do
-      allow(weather_reporter).to receive(:stormy?).and_return false
+      allow(weather).to receive(:stormy?).and_return false
       described_class::DEFAULT_CAPACITY.times { default_airport.land(plane) }
       expect { default_airport.land(plane) }.to raise_error 'Cannot land plane: airport full'
     end

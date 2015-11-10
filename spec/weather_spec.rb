@@ -1,13 +1,17 @@
-require './lib/weather.rb'
-
-class Dummy; include Weather; end
+require 'weather'
 
 describe Weather do
-  let(:weather) {Dummy.new}
-  let(:stormy_weather) {double :weather}
+  subject(:weather) { described_class.new }
 
-    it "is often fine but occasionaly stormy" do
-      allow(stormy_weather).to receive(:stormy?) {true}
-      expect(stormy_weather.stormy?).to be true
+  describe '#stormy?' do
+    it 'can be non-stormy' do
+      allow(weather).to receive(:rand).and_return 1
+      expect(weather.stormy?).to be false
     end
- end
+
+    it 'can be stormy' do
+      allow(weather).to receive(:rand).and_return 6
+      expect(weather.stormy?).to be true
+    end
+  end
+end
